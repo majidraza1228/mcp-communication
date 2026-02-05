@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "messenger-server": {
+      "command": "python",
+      "args": ["server_a.py"],
+      "cwd": "/absolute/path/to/mcp-server-communication",
+      "env": {
+        "SERVER_B_URL": "http://localhost:8000"
+      }
+    },
+    "ai-responder-server": {
+      "command": "python",
+      "args": ["server_b.py"],
+      "cwd": "/absolute/path/to/mcp-server-communication",
+      "env": {
+        "OPENAI_API_KEY": "sk-your-api-key-here",
+        "HTTP_PORT": "8000"
+      }
+    }
+  }
+}

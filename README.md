@@ -14,6 +14,40 @@ Two [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) servers tha
 
 ---
 
+## Tech Stack
+
+| Component | Library | Purpose |
+|-----------|---------|---------|
+| MCP SDK | [`mcp`](https://pypi.org/project/mcp/) v1.26.0 (by Anthropic) | Provides **FastMCP** – the high-level Python framework for building MCP servers. Both servers use `from mcp.server.fastmcp import FastMCP` to define tools with simple `@mcp.tool()` decorators. Communication with clients (e.g. Claude Desktop) happens over **stdio** transport. |
+| HTTP Framework | [`fastapi`](https://fastapi.tiangolo.com/) v0.128+ | Server B exposes REST endpoints (`/process`, `/stream`, `/health`, `/models`) that Server A calls via HTTP. |
+| ASGI Server | [`uvicorn`](https://www.uvicorn.org/) v0.27+ | Runs the FastAPI HTTP server. |
+| OpenAI SDK | [`openai`](https://pypi.org/project/openai/) v1.10+ | Async client (`AsyncOpenAI`) for calling GPT chat completions and streaming. |
+| HTTP Client | [`httpx`](https://www.python-httpx.org/) v0.27+ | Server A uses `httpx.AsyncClient` to make async HTTP requests to Server B. |
+| Validation | [`pydantic`](https://docs.pydantic.dev/) v2.5+ | Request/response models with type validation. |
+| Config | [`python-dotenv`](https://pypi.org/project/python-dotenv/) v1.0+ | Loads `.env` file into environment variables at startup. |
+
+### Why FastMCP?
+
+The `mcp` Python package (maintained by Anthropic) includes **FastMCP**, a high-level API for creating MCP servers. Instead of manually wiring up `Server`, `list_tools`, and `call_tool` handlers, FastMCP lets you write:
+
+```python
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP("my-server")
+
+@mcp.tool()
+async def my_tool(message: str) -> str:
+    """Tool description shown to the LLM client."""
+    return f"Processed: {message}"
+
+if __name__ == "__main__":
+    mcp.run()  # starts stdio transport
+```
+
+Each `@mcp.tool()` decorated function automatically becomes an MCP tool with its name, description (from the docstring), and input schema (inferred from type hints).
+
+---
+
 ## Features
 
 - Send messages from Server A and get AI-generated responses from Server B

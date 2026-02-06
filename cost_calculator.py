@@ -13,7 +13,7 @@ class CostCalculator:
         "gpt-4o": {"prompt": 0.005, "completion": 0.015},
         "gpt-4o-mini": {"prompt": 0.00015, "completion": 0.0006},
         "gpt-3.5-turbo": {"prompt": 0.0015, "completion": 0.002},
-        # AWS Bedrock Claude models (prices vary by region, these are approximate)
+        # AWS Bedrock Anthropic models (prices vary by region, these are approximate)
         "anthropic.claude-3-5-sonnet-20241022-v2:0": {"prompt": 0.003, "completion": 0.015},
         "anthropic.claude-3-5-sonnet-20240620-v1:0": {"prompt": 0.003, "completion": 0.015},
         "anthropic.claude-3-5-haiku-20241022-v1:0": {"prompt": 0.0008, "completion": 0.004},

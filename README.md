@@ -27,7 +27,7 @@ Demonstrates communication between two MCP servers via HTTP, with Server B conne
 4. **Server B** calls the configured LLM provider:
    - **Mock**: Returns fake response (no API call)
    - **OpenAI**: Calls OpenAI API (GPT-4, etc.)
-   - **Bedrock**: Calls AWS Bedrock (Claude models)
+   - **Bedrock**: Calls AWS Bedrock API
 5. **Server B** returns AI response to **Server A**
 6. **Server A** returns result to the caller
 
@@ -226,8 +226,8 @@ BEDROCK_DEFAULT_MODEL=anthropic.claude-3-5-sonnet-20241022-v2:0
 ```
 
 - Calls AWS Bedrock API
-- Models: `claude-3.5-sonnet-v2`, `claude-3-opus`, `claude-3-haiku`
-- Use for: Production with AWS/Claude
+- Models: `sonnet-v2`, `opus`, `haiku` (Anthropic models via Bedrock)
+- Use for: Production with AWS Bedrock
 
 ---
 
@@ -237,7 +237,7 @@ Both MCP servers support two transport modes:
 
 ### Option 1: stdio (Default)
 
-Standard input/output - used with Claude Desktop and MCP clients.
+Standard input/output - used with MCP clients and desktop applications.
 
 ```env
 MCP_TRANSPORT=stdio
@@ -282,7 +282,7 @@ Server B: http://localhost:8002/sse
 
 | Feature | stdio | SSE (Streamable HTTP) |
 |---------|-------|----------------------|
-| Use case | Claude Desktop, local MCP clients | Web clients, remote access |
+| Use case | MCP clients, desktop apps | Web clients, remote access |
 | Protocol | Standard I/O pipes | HTTP + Server-Sent Events |
 | Streaming | Yes | Yes |
 | Network access | Local only | Network accessible |

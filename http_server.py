@@ -196,7 +196,7 @@ async def list_models():
             "note": "Mock provider for testing - no external API calls",
         }
     elif AI_PROVIDER == "bedrock":
-        # Return predefined Bedrock Claude models
+        # Return predefined Bedrock models
         from ai_provider import BedrockProvider
 
         models = list(BedrockProvider.MODEL_MAPPING.keys())

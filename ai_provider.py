@@ -118,7 +118,7 @@ class OpenAIProvider(AIProvider):
 
 
 class BedrockProvider(AIProvider):
-    """AWS Bedrock provider using Claude models."""
+    """AWS Bedrock provider using Anthropic models."""
 
     # Model ID mapping for convenience
     MODEL_MAPPING = {
@@ -172,7 +172,7 @@ class BedrockProvider(AIProvider):
             else:
                 chat_messages.append(msg)
 
-        # Build Bedrock request body (Anthropic Claude format)
+        # Build Bedrock request body (Anthropic format)
         body = {
             "anthropic_version": "bedrock-2023-05-31",
             "max_tokens": max_tokens,

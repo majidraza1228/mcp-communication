@@ -1,23 +1,31 @@
-# MCP Server Communication with AI Integration
+# MCP Server-to-Server Communication with AI Integration
 
-A simple HTTP server that processes messages using AI providers (**Mock**, **OpenAI**, or **AWS Bedrock**).
+Two MCP servers communicating via HTTP, with AI processing (Mock, OpenAI, or AWS Bedrock).
 
 ```
-┌─────────────┐   HTTP POST    ┌──────────────┐         ┌─────────────────┐
-│   Client    │ ─────────────► │  HTTP Server │ ──────► │ Mock / OpenAI / │
-│  (curl/app) │ ◄───────────── │  (FastAPI)   │ ◄────── │    Bedrock      │
-└─────────────┘   AI Response  └──────────────┘         └─────────────────┘
+┌─────────────────┐         ┌─────────────────┐         ┌─────────────────┐
+│  Claude Desktop │  MCP    │    Server A     │  HTTP   │    Server B     │
+│   or MCP Client │ ──────► │   (Messenger)   │ ──────► │  (AI Responder) │
+│                 │ ◄────── │                 │ ◄────── │                 │
+└─────────────────┘         └─────────────────┘         └─────────────────┘
+                                                                 │
+                                                                 ▼
+                                                        ┌─────────────────┐
+                                                        │ Mock / OpenAI / │
+                                                        │    Bedrock      │
+                                                        └─────────────────┘
 ```
 
 ---
 
-## Features
+## Architecture
 
-- **3 AI Providers**: Mock (no API needed), OpenAI, AWS Bedrock
-- **Simple HTTP API**: Just POST to `/process` to get AI responses
-- **Streaming**: Real-time responses via Server-Sent Events
-- **Health Check**: Monitor server and AI provider status
-- **Cost Tracking**: Token usage and cost estimates per request
+| Component | File | Description |
+|-----------|------|-------------|
+| **Server A** | `server_a.py` | MCP server that forwards messages to Server B via HTTP |
+| **Server B** | `server_b.py` | MCP server with direct AI processing tools |
+| **HTTP API** | `http_server.py` | FastAPI server that Server A calls |
+| **AI Provider** | `ai_provider.py` | Abstraction for Mock/OpenAI/Bedrock |
 
 ---
 
@@ -37,23 +45,62 @@ pip install -r requirements.txt
 
 ```bash
 cp .env.example .env
+# Default is mock provider (no API keys needed)
 ```
 
-Default is **mock provider** (no API keys needed).
+### 3. Run (2-Server Setup)
 
-### 3. Run
-
+**Terminal 1 – Start Server B (HTTP API):**
 ```bash
 .venv/bin/uvicorn http_server:app --host 0.0.0.0 --port 8000
 ```
 
-### 4. Test
+**Terminal 2 – Start Server A (MCP):**
+```bash
+.venv/bin/python server_a.py
+```
+
+Or run **Server B as MCP** directly:
+```bash
+.venv/bin/python server_b.py
+```
+
+---
+
+## MCP Tools
+
+### Server A Tools (calls Server B via HTTP)
+
+| Tool | Description |
+|------|-------------|
+| `send_message` | Send message to Server B, get AI response |
+| `check_server_b_health` | Check Server B health status |
+| `list_available_models` | List available AI models |
+| `get_server_b_config` | Get Server B configuration |
+
+### Server B Tools (direct AI processing)
+
+| Tool | Description |
+|------|-------------|
+| `process_message` | Process message with AI provider |
+| `get_provider_info` | Get AI provider information |
+| `health_check` | Check AI provider health |
+
+---
+
+## HTTP API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/process` | Process message with AI |
+| `POST` | `/stream` | Stream AI response (SSE) |
+| `GET` | `/health` | Health check |
+| `GET` | `/models` | List available models |
+| `GET` | `/config` | Get configuration |
+
+### Example Request
 
 ```bash
-# Health check
-curl http://localhost:8000/health
-
-# Send a message
 curl -X POST http://localhost:8000/process \
   -H "Content-Type: application/json" \
   -d '{"message":"Hello, how are you?"}'
@@ -61,41 +108,28 @@ curl -X POST http://localhost:8000/process \
 
 ---
 
-## API Endpoints
+## Claude Desktop Integration
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/process` | Process a message and get AI response |
-| `POST` | `/stream` | Stream AI response via Server-Sent Events |
-| `GET` | `/health` | Health check with provider status |
-| `GET` | `/models` | List available models |
-| `GET` | `/config` | Get current configuration |
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
-### POST /process
-
-**Request:**
 ```json
 {
-  "message": "What is Python?",
-  "model": "mock-model",
-  "temperature": 0.7,
-  "max_tokens": 100
-}
-```
-
-**Response:**
-```json
-{
-  "status": "success",
-  "aiResponse": "[MOCK RESPONSE #1] You said: 'What is Python?'. This is a test response.",
-  "model": "mock-model",
-  "usage": {
-    "promptTokens": 6,
-    "completionTokens": 30,
-    "totalTokens": 36,
-    "estimatedCost": 0.0
-  },
-  "processingTime": 0.1
+  "mcpServers": {
+    "server-a-messenger": {
+      "command": "/path/to/mcp-communication/.venv/bin/python",
+      "args": ["/path/to/mcp-communication/server_a.py"],
+      "env": {
+        "SERVER_B_URL": "http://localhost:8000"
+      }
+    },
+    "server-b-ai": {
+      "command": "/path/to/mcp-communication/.venv/bin/python",
+      "args": ["/path/to/mcp-communication/server_b.py"],
+      "env": {
+        "AI_PROVIDER": "mock"
+      }
+    }
+  }
 }
 ```
 
@@ -105,7 +139,7 @@ curl -X POST http://localhost:8000/process \
 
 Edit `.env` to choose your AI provider:
 
-### Option 1: Mock (Default - No API Keys)
+### Option 1: Mock (Default – No API Keys)
 
 ```env
 AI_PROVIDER=mock
@@ -133,7 +167,7 @@ BEDROCK_DEFAULT_MODEL=anthropic.claude-3-5-sonnet-20241022-v2:0
 
 ## Running on Different Machines
 
-### Machine B (Server)
+### Machine B (Server B – AI Responder)
 
 ```bash
 # Configure .env
@@ -141,23 +175,46 @@ AI_PROVIDER=mock
 HTTP_HOST=0.0.0.0
 HTTP_PORT=8000
 
-# Start server
+# Start HTTP server
 .venv/bin/uvicorn http_server:app --host 0.0.0.0 --port 8000
 
 # Find your IP
 ifconfig | grep "inet "   # Example: 192.168.1.100
 ```
 
-### Machine A (Client)
+### Machine A (Server A – Messenger)
 
 ```bash
-# Test connection
-curl http://192.168.1.100:8000/health
+# Configure .env
+SERVER_B_URL=http://192.168.1.100:8000
+
+# Start MCP server
+.venv/bin/python server_a.py
+```
+
+---
+
+## Testing
+
+### Test HTTP API directly
+
+```bash
+# Health check
+curl http://localhost:8000/health
 
 # Send message
-curl -X POST http://192.168.1.100:8000/process \
+curl -X POST http://localhost:8000/process \
   -H "Content-Type: application/json" \
-  -d '{"message":"Hello from Machine A"}'
+  -d '{"message":"What is Python?"}'
+```
+
+### Test MCP Server A → Server B communication
+
+```bash
+# Start Server B HTTP API first
+.venv/bin/uvicorn http_server:app --port 8000 &
+
+# Then test via MCP (requires MCP client or Claude Desktop)
 ```
 
 ---
@@ -166,7 +223,9 @@ curl -X POST http://192.168.1.100:8000/process \
 
 ```
 mcp-communication/
-├── http_server.py      # FastAPI HTTP server (main file)
+├── server_a.py         # MCP Server A (Messenger) - forwards to Server B
+├── server_b.py         # MCP Server B (AI Responder) - direct AI tools
+├── http_server.py      # FastAPI HTTP server
 ├── ai_provider.py      # AI provider abstraction (Mock, OpenAI, Bedrock)
 ├── models.py           # Pydantic request/response models
 ├── cost_calculator.py  # Token cost estimator
@@ -180,7 +239,7 @@ mcp-communication/
 ## Supported Models
 
 ### Mock
-- `mock-model` - For testing without API calls
+- `mock-model` – For testing without API calls
 
 ### OpenAI
 - `gpt-4`, `gpt-4-turbo`, `gpt-4o`, `gpt-4o-mini`, `gpt-3.5-turbo`
@@ -188,20 +247,6 @@ mcp-communication/
 ### AWS Bedrock (Claude)
 - `claude-3.5-sonnet-v2`, `claude-3.5-sonnet`, `claude-3.5-haiku`
 - `claude-3-sonnet`, `claude-3-haiku`, `claude-3-opus`
-
----
-
-## Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `AI_PROVIDER` | `openai` | Provider: `mock`, `openai`, or `bedrock` |
-| `OPENAI_API_KEY` | — | OpenAI API key (if using openai) |
-| `AWS_ACCESS_KEY_ID` | — | AWS access key (if using bedrock) |
-| `AWS_SECRET_ACCESS_KEY` | — | AWS secret key (if using bedrock) |
-| `AWS_REGION` | `us-east-1` | AWS region for Bedrock |
-| `HTTP_HOST` | `0.0.0.0` | Server bind address |
-| `HTTP_PORT` | `8000` | Server port |
 
 ---
 

@@ -492,7 +492,11 @@ mcp-communication/
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `AI_PROVIDER` | No | `openai` | AI provider: `openai` or `bedrock` |
+| `AI_PROVIDER` | No | `openai` | AI provider: `mock`, `openai`, or `bedrock` |
+
+### Mock Provider Configuration
+
+No configuration needed! Just set `AI_PROVIDER=mock` to test communication without external APIs.
 
 ### OpenAI Configuration
 

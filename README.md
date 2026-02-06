@@ -181,37 +181,100 @@ The architecture supports running Server A and Server B on separate machines sin
 
 ### Machine B (Server B / AI Responder)
 
-1. Clone the repo and install dependencies
-2. Configure `.env` with your AI provider credentials
+1. Clone the repo and install dependencies:
+   ```bash
+   git clone https://github.com/majidraza1228/mcp-communication.git
+   cd mcp-communication
+   python3.12 -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+2. Configure `.env`:
+   ```env
+   AI_PROVIDER=mock   # or openai/bedrock
+   HTTP_HOST=0.0.0.0
+   HTTP_PORT=8000
+   ```
+
 3. Start Server B:
    ```bash
    .venv/bin/uvicorn http_server:app --host 0.0.0.0 --port 8000
    ```
-4. Ensure firewall allows inbound connections on port 8000
+
+4. Open firewall for port 8000:
+   ```bash
+   # Linux
+   sudo ufw allow 8000
+
+   # macOS - usually open by default
+   ```
+
+5. Find Machine B's IP address:
+   ```bash
+   # macOS
+   ifconfig | grep "inet "
+
+   # Linux
+   hostname -I
+   ```
+   Example output: `192.168.1.100`
 
 ### Machine A (Server A / Messenger)
 
-1. Clone the repo and install dependencies
-2. Configure `.env` to point to Machine B:
-   ```env
-   SERVER_B_URL=http://192.168.1.100:8000   # Machine B's IP
-   # or
-   SERVER_B_URL=http://server-b.example.com:8000
+1. Clone the repo and install dependencies:
+   ```bash
+   git clone https://github.com/majidraza1228/mcp-communication.git
+   cd mcp-communication
+   python3.12 -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
    ```
-3. Run Server A normally
+
+2. Configure `.env` to point to Machine B's IP:
+   ```env
+   AI_PROVIDER=mock
+   SERVER_B_URL=http://192.168.1.100:8000   # <-- Machine B's IP address
+   ```
+
+3. Test connection to Machine B:
+   ```bash
+   curl http://192.168.1.100:8000/health
+   ```
+
+4. Run Server A MCP tools:
+   ```bash
+   .venv/bin/python -c "
+   import asyncio, json
+   from dotenv import load_dotenv
+   load_dotenv()
+   from server_a import send_message_to_ai
+
+   async def test():
+       result = json.loads(await send_message_to_ai(message='Hello from Machine A'))
+       print('Response:', result['aiResponse'])
+
+   asyncio.run(test())
+   "
+   ```
 
 ### Architecture Diagram (Separate Machines)
 
 ```
-┌─────────────────────────────────────┐          ┌─────────────────────────────────────┐
-│            Machine A                │          │            Machine B                │
-│                                     │          │                                     │
-│  ┌───────────┐    ┌──────────────┐  │   HTTP   │  ┌──────────────┐    ┌───────────┐  │
-│  │  Claude   │◄──►│   Server A   │──┼─────────►┼──│   Server B   │───►│  OpenAI   │  │
-│  │  Desktop  │    │ (Messenger)  │  │  :8000   │  │(AI Responder)│    │    or     │  │
-│  └───────────┘    └──────────────┘  │          │  └──────────────┘    │  Bedrock  │  │
-│                                     │          │                      └───────────┘  │
-└─────────────────────────────────────┘          └─────────────────────────────────────┘
+┌─────────────────────────────────────┐              ┌─────────────────────────────────────┐
+│            Machine A                │              │            Machine B                │
+│         (192.168.1.50)              │              │         (192.168.1.100)             │
+│                                     │              │                                     │
+│  .env:                              │    HTTP      │  .env:                              │
+│  SERVER_B_URL=                      │   :8000      │  AI_PROVIDER=mock                   │
+│  http://192.168.1.100:8000          │ ──────────►  │  HTTP_HOST=0.0.0.0                  │
+│                                     │              │  HTTP_PORT=8000                     │
+│  ┌───────────┐    ┌──────────────┐  │              │  ┌──────────────┐    ┌───────────┐  │
+│  │  Claude   │◄──►│   Server A   │──┼──────────────┼─►│   Server B   │───►│   Mock/   │  │
+│  │  Desktop  │    │ (Messenger)  │  │              │  │(AI Responder)│    │  OpenAI/  │  │
+│  └───────────┘    └──────────────┘  │              │  └──────────────┘    │  Bedrock  │  │
+│                                     │              │                      └───────────┘  │
+└─────────────────────────────────────┘              └─────────────────────────────────────┘
 ```
 
 ### Security for Production

@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from typing import Any, AsyncIterator
 
 # Provider type from environment
-AI_PROVIDER = os.getenv("AI_PROVIDER", "openai").lower()  # "openai" or "bedrock"
+AI_PROVIDER = os.getenv("AI_PROVIDER", "openai").lower()  # "openai", "bedrock", or "mock"
 
 
 class AIProvider(ABC):
@@ -281,6 +281,80 @@ class BedrockProvider(AIProvider):
         return self.default_model
 
 
+class MockProvider(AIProvider):
+    """Mock provider for testing communication without external API calls."""
+
+    def __init__(self):
+        self.default_model = "mock-model"
+        self.request_count = 0
+
+    async def chat_completion(
+        self,
+        messages: list[dict[str, str]],
+        model: str,
+        temperature: float,
+        max_tokens: int,
+    ) -> dict[str, Any]:
+        import asyncio
+
+        self.request_count += 1
+
+        # Simulate slight delay
+        await asyncio.sleep(0.1)
+
+        # Extract user message
+        user_message = ""
+        for msg in messages:
+            if msg["role"] == "user":
+                user_message = msg["content"]
+                break
+
+        # Generate mock response
+        mock_response = f"[MOCK RESPONSE #{self.request_count}] You said: '{user_message}'. This is a test response without calling any external API."
+
+        # Simulate token counts
+        prompt_tokens = len(user_message.split()) * 2
+        completion_tokens = len(mock_response.split()) * 2
+
+        return {
+            "content": mock_response,
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
+            "total_tokens": prompt_tokens + completion_tokens,
+            "model": "mock-model",
+        }
+
+    async def chat_completion_stream(
+        self,
+        messages: list[dict[str, str]],
+        model: str,
+        temperature: float,
+        max_tokens: int,
+    ) -> AsyncIterator[str]:
+        import asyncio
+
+        self.request_count += 1
+
+        # Extract user message
+        user_message = ""
+        for msg in messages:
+            if msg["role"] == "user":
+                user_message = msg["content"]
+                break
+
+        # Stream mock response word by word
+        words = f"[MOCK STREAM #{self.request_count}] You said: '{user_message}'. This is a streaming test response.".split()
+        for word in words:
+            await asyncio.sleep(0.05)
+            yield word + " "
+
+    async def health_check(self) -> dict[str, Any]:
+        return {"status": "healthy", "note": "Mock provider - no external API"}
+
+    def get_default_model(self) -> str:
+        return self.default_model
+
+
 # Singleton provider instance
 _provider: AIProvider | None = None
 
@@ -289,7 +363,9 @@ def get_ai_provider() -> AIProvider:
     """Get or create the AI provider based on AI_PROVIDER env var."""
     global _provider
     if _provider is None:
-        if AI_PROVIDER == "bedrock":
+        if AI_PROVIDER == "mock":
+            _provider = MockProvider()
+        elif AI_PROVIDER == "bedrock":
             _provider = BedrockProvider()
         else:
             _provider = OpenAIProvider()

@@ -102,7 +102,20 @@ Copy the example environment file:
 cp .env.example .env
 ```
 
-### Option 1: Using OpenAI
+### Option 1: Mock Provider (Testing Only)
+
+Use this to test Server A ↔ Server B communication without any external API:
+
+```env
+AI_PROVIDER=mock
+```
+
+No API keys needed. Returns simulated responses like:
+```
+[MOCK RESPONSE #1] You said: 'Hello'. This is a test response without calling any external API.
+```
+
+### Option 2: Using OpenAI
 
 ```env
 AI_PROVIDER=openai
@@ -110,7 +123,7 @@ OPENAI_API_KEY=sk-your-api-key-here
 OPENAI_DEFAULT_MODEL=gpt-4
 ```
 
-### Option 2: Using AWS Bedrock
+### Option 3: Using AWS Bedrock
 
 ```env
 AI_PROVIDER=bedrock

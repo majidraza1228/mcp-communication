@@ -31,7 +31,9 @@ ai_stats: Dict[str, Any] = {
 
 # Default AI configuration (mutable via MCP tool)
 # Use provider-specific defaults
-if AI_PROVIDER == "bedrock":
+if AI_PROVIDER == "mock":
+    _default_model = "mock-model"
+elif AI_PROVIDER == "bedrock":
     _default_model = os.getenv("BEDROCK_DEFAULT_MODEL", "anthropic.claude-3-5-sonnet-20241022-v2:0")
 else:
     _default_model = os.getenv("OPENAI_DEFAULT_MODEL", "gpt-4")
@@ -186,7 +188,14 @@ async def list_models():
     """List available models for the configured provider."""
     provider = get_ai_provider()
 
-    if AI_PROVIDER == "bedrock":
+    if AI_PROVIDER == "mock":
+        return {
+            "provider": "mock",
+            "models": ["mock-model"],
+            "default": "mock-model",
+            "note": "Mock provider for testing - no external API calls",
+        }
+    elif AI_PROVIDER == "bedrock":
         # Return predefined Bedrock Claude models
         from ai_provider import BedrockProvider
 
@@ -231,7 +240,9 @@ async def health_check():
     }
 
     # Check provider configuration
-    if AI_PROVIDER == "bedrock":
+    if AI_PROVIDER == "mock":
+        health["ai"]["configured"] = True  # Mock always configured
+    elif AI_PROVIDER == "bedrock":
         health["ai"]["configured"] = bool(
             os.getenv("AWS_ACCESS_KEY_ID") or os.getenv("AWS_PROFILE") or os.getenv("AWS_ROLE_ARN")
         )

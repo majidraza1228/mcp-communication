@@ -2,6 +2,39 @@
 
 Two separate MCP servers communicating — Server A sends a message to Server B, Server B talks to an LLM (Mock), and the response flows back to Server A.
 
+## Two Communication Layers
+
+This project has **two separate communication layers** — don't confuse them:
+
+```
+Layer 1: MCP Transport (stdio or SSE)
+   = How MCP CLIENTS (Claude Desktop, Inspector) connect to your servers
+
+Layer 2: HTTP POST (always httpx)
+   = How Server A talks to Server B (this NEVER changes)
+```
+
+```
+                  Layer 1                      Layer 2                    Layer 1
+               (MCP Transport)           (Always HTTP POST)           (MCP Transport)
+
+┌──────────┐   stdio OR SSE   ┌──────────┐    HTTP POST    ┌──────────┐
+│  Claude   │ ───────────────► │ Server A │ ──────────────► │ Server B │
+│  Desktop  │ ◄─────────────── │          │ ◄────────────── │ (FastAPI) │
+└──────────┘                   └──────────┘                 └──────────┘
+                                                                 │
+                                                                 ▼
+                                                            ┌─────────┐
+                                                            │  LLM    │
+                                                            └─────────┘
+```
+
+- **stdio** — MCP client must be on the **same machine** (Claude Desktop spawns the server as a subprocess)
+- **SSE** — MCP client can connect from **any machine** over HTTP (web browsers, remote MCP Inspector)
+- **Server A → Server B** — always HTTP POST via `httpx`, regardless of transport
+
+---
+
 ## Architecture
 
 ```
@@ -43,7 +76,7 @@ Source files involved (you don't run these directly):
 
 ---
 
-## Step-by-Step Instructions
+## Same Machine Setup
 
 ### Step 1 — Setup (one time)
 
@@ -57,11 +90,7 @@ cp .env.example .env
 
 Verify `.env` has `AI_PROVIDER=mock` (no API keys needed).
 
----
-
 ### Step 2 — Start Server B (Terminal 1)
-
-Open **Terminal 1** and run:
 
 ```bash
 cd mcp-server-communication
@@ -76,21 +105,15 @@ INFO:     Uvicorn running on http://0.0.0.0:8000
 INFO:     Application startup complete.
 ```
 
-**Keep this terminal open.** Server B is now listening on port 8000.
-
----
+**Keep this terminal open.**
 
 ### Step 3 — Run the Test (Terminal 2)
-
-Open **Terminal 2** and run:
 
 ```bash
 cd mcp-server-communication
 source .venv/bin/activate
 .venv/bin/python test_communication.py
 ```
-
----
 
 ### Step 4 — Read the Output
 
@@ -151,12 +174,94 @@ This proves **Server A made HTTP requests to Server B** — you never called Ser
 
 ---
 
+## Different Machines Setup
+
+```
+┌─────────────────────┐                    ┌─────────────────────┐
+│    Machine A         │                    │     Machine B        │
+│   (192.168.1.50)     │     HTTP POST      │   (192.168.1.100)    │
+│                      │   over network     │                      │
+│   Server A ──────────┼───────────────────►│   Server B (:8000)   │
+│                      │                    │       │               │
+│                      │                    │       ▼               │
+│                      │                    │   Mock/OpenAI/Bedrock │
+└─────────────────────┘                    └─────────────────────┘
+```
+
+### Machine B — Start Server B
+
+```bash
+# 1. Setup
+git clone https://github.com/majidraza1228/mcp-communication.git
+cd mcp-communication
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+
+# 2. Find your IP
+ifconfig | grep "inet "
+# Example: inet 192.168.1.100
+
+# 3. Start Server B
+.venv/bin/uvicorn http_server:app --host 0.0.0.0 --port 8000
+```
+
+### Machine A — Start Server A and test
+
+```bash
+# 1. Setup
+git clone https://github.com/majidraza1228/mcp-communication.git
+cd mcp-communication
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+
+# 2. Point to Machine B's IP in .env
+# Change this line:
+#   SERVER_B_URL=http://localhost:8000
+# To:
+#   SERVER_B_URL=http://192.168.1.100:8000
+
+# 3. Verify connectivity
+curl http://192.168.1.100:8000/health
+
+# 4. Run the test
+.venv/bin/python test_communication.py
+```
+
+The **only change** is `SERVER_B_URL` in `.env` on Machine A. Everything else is identical.
+
+---
+
+## Transport Modes
+
+| Scenario | MCP Transport | Server A → B |
+|---|---|---|
+| Same machine, Claude Desktop | **stdio** | HTTP to localhost:8000 |
+| Same machine, web client | **SSE** | HTTP to localhost:8000 |
+| Different machines, Claude Desktop | **stdio** on each machine | HTTP to remote IP:8000 |
+| Different machines, web client | **SSE** on each machine | HTTP to remote IP:8000 |
+
+```bash
+# stdio (default) — local MCP clients only
+.venv/bin/python server_a.py
+.venv/bin/python server_b.py
+
+# SSE — network accessible MCP clients
+.venv/bin/python server_a.py sse    # port 8001
+.venv/bin/python server_b.py sse    # port 8002
+```
+
+---
+
 ## What Happened
 
 ```
 Step 1: You ran test_communication.py
 Step 2: test_communication.py called Server A's send_message() tool
-Step 3: Server A made HTTP POST to http://localhost:8000/process
+Step 3: Server A made HTTP POST to Server B (/process endpoint)
 Step 4: Server B (http_server.py) received the request
 Step 5: Server B called the Mock AI provider
 Step 6: Mock AI returned a simulated response

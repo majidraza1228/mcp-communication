@@ -118,17 +118,10 @@ class OpenAIProvider(AIProvider):
 
 
 class BedrockProvider(AIProvider):
-    """AWS Bedrock provider using Anthropic models."""
+    """AWS Bedrock provider."""
 
-    # Model ID mapping for convenience
-    MODEL_MAPPING = {
-        "claude-3-sonnet": "anthropic.claude-3-sonnet-20240229-v1:0",
-        "claude-3-haiku": "anthropic.claude-3-haiku-20240307-v1:0",
-        "claude-3-opus": "anthropic.claude-3-opus-20240229-v1:0",
-        "claude-3.5-sonnet": "anthropic.claude-3-5-sonnet-20240620-v1:0",
-        "claude-3.5-sonnet-v2": "anthropic.claude-3-5-sonnet-20241022-v2:0",
-        "claude-3.5-haiku": "anthropic.claude-3-5-haiku-20241022-v1:0",
-    }
+    # Model ID mapping for convenience (add your Bedrock model aliases here)
+    MODEL_MAPPING = {}
 
     def __init__(self):
         import boto3
@@ -143,9 +136,7 @@ class BedrockProvider(AIProvider):
             "bedrock-runtime",
             region_name=self.region,
         )
-        self.default_model = os.getenv(
-            "BEDROCK_DEFAULT_MODEL", "anthropic.claude-3-5-sonnet-20241022-v2:0"
-        )
+        self.default_model = os.getenv("BEDROCK_DEFAULT_MODEL", "")
 
     def _resolve_model(self, model: str) -> str:
         """Resolve short model name to full Bedrock model ID."""
@@ -271,7 +262,7 @@ class BedrockProvider(AIProvider):
             )
             await loop.run_in_executor(
                 None,
-                lambda: bedrock_client.list_foundation_models(byProvider="Anthropic"),
+                lambda: bedrock_client.list_foundation_models(),
             )
             return {"status": "healthy"}
         except Exception as exc:

@@ -8,7 +8,7 @@ This project has **two separate communication layers** — don't confuse them:
 
 ```
 Layer 1: MCP Transport (stdio or SSE)
-   = How MCP CLIENTS (Claude Desktop, Inspector) connect to your servers
+   = How MCP CLIENTS (MCP Inspector, etc.) connect to your servers
 
 Layer 2: HTTP POST (always httpx)
    = How Server A talks to Server B (this NEVER changes)
@@ -19,8 +19,8 @@ Layer 2: HTTP POST (always httpx)
                (MCP Transport)           (Always HTTP POST)           (MCP Transport)
 
 ┌──────────┐   stdio OR SSE   ┌──────────┐    HTTP POST    ┌──────────┐
-│  Claude   │ ───────────────► │ Server A │ ──────────────► │ Server B │
-│  Desktop  │ ◄─────────────── │          │ ◄────────────── │ (FastAPI) │
+│   MCP    │ ───────────────► │ Server A │ ──────────────► │ Server B │
+│  Client   │ ◄─────────────── │          │ ◄────────────── │ (FastAPI) │
 └──────────┘                   └──────────┘                 └──────────┘
                                                                  │
                                                                  ▼
@@ -29,7 +29,7 @@ Layer 2: HTTP POST (always httpx)
                                                             └─────────┘
 ```
 
-- **stdio** — MCP client must be on the **same machine** (Claude Desktop spawns the server as a subprocess)
+- **stdio** — MCP client must be on the **same machine** (the client spawns the server as a subprocess)
 - **SSE** — MCP client can connect from **any machine** over HTTP (web browsers, remote MCP Inspector)
 - **Server A → Server B** — always HTTP POST via `httpx`, regardless of transport
 
@@ -239,9 +239,9 @@ The **only change** is `SERVER_B_URL` in `.env` on Machine A. Everything else is
 
 | Scenario | MCP Transport | Server A → B |
 |---|---|---|
-| Same machine, Claude Desktop | **stdio** | HTTP to localhost:8000 |
+| Same machine, local MCP client | **stdio** | HTTP to localhost:8000 |
 | Same machine, web client | **SSE** | HTTP to localhost:8000 |
-| Different machines, Claude Desktop | **stdio** on each machine | HTTP to remote IP:8000 |
+| Different machines, local MCP client | **stdio** on each machine | HTTP to remote IP:8000 |
 | Different machines, web client | **SSE** on each machine | HTTP to remote IP:8000 |
 
 ```bash

@@ -13,24 +13,10 @@ class CostCalculator:
         "gpt-4o": {"prompt": 0.005, "completion": 0.015},
         "gpt-4o-mini": {"prompt": 0.00015, "completion": 0.0006},
         "gpt-3.5-turbo": {"prompt": 0.0015, "completion": 0.002},
-        # AWS Bedrock Anthropic models (prices vary by region, these are approximate)
-        "anthropic.claude-3-5-sonnet-20241022-v2:0": {"prompt": 0.003, "completion": 0.015},
-        "anthropic.claude-3-5-sonnet-20240620-v1:0": {"prompt": 0.003, "completion": 0.015},
-        "anthropic.claude-3-5-haiku-20241022-v1:0": {"prompt": 0.0008, "completion": 0.004},
-        "anthropic.claude-3-sonnet-20240229-v1:0": {"prompt": 0.003, "completion": 0.015},
-        "anthropic.claude-3-haiku-20240307-v1:0": {"prompt": 0.00025, "completion": 0.00125},
-        "anthropic.claude-3-opus-20240229-v1:0": {"prompt": 0.015, "completion": 0.075},
     }
 
-    # Short name aliases for Bedrock models
-    MODEL_ALIASES = {
-        "claude-3-sonnet": "anthropic.claude-3-sonnet-20240229-v1:0",
-        "claude-3-haiku": "anthropic.claude-3-haiku-20240307-v1:0",
-        "claude-3-opus": "anthropic.claude-3-opus-20240229-v1:0",
-        "claude-3.5-sonnet": "anthropic.claude-3-5-sonnet-20240620-v1:0",
-        "claude-3.5-sonnet-v2": "anthropic.claude-3-5-sonnet-20241022-v2:0",
-        "claude-3.5-haiku": "anthropic.claude-3-5-haiku-20241022-v1:0",
-    }
+    # Short name aliases for Bedrock models (add your model aliases here)
+    MODEL_ALIASES = {}
 
     @classmethod
     def calculate(cls, model: str, prompt_tokens: int, completion_tokens: int) -> float:

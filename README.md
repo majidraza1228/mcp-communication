@@ -72,7 +72,6 @@ Both MCP servers support **stdio** (default) and **SSE** (Streamable HTTP):
 ## Documentation
 
 - [PROOF_OF_CONCEPT.md](PROOF_OF_CONCEPT.md) — Step-by-step guide to prove MCP server-to-server communication works
-- [CLAUDE.md](CLAUDE.md) — Project conventions, architecture, and common commands for Claude Code
 - [.env.example](.env.example) — Full list of environment variables and configuration options
 
 ## License

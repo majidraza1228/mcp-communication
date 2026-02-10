@@ -34,7 +34,7 @@ ai_stats: Dict[str, Any] = {
 if AI_PROVIDER == "mock":
     _default_model = "mock-model"
 elif AI_PROVIDER == "bedrock":
-    _default_model = os.getenv("BEDROCK_DEFAULT_MODEL", "anthropic.claude-3-5-sonnet-20241022-v2:0")
+    _default_model = os.getenv("BEDROCK_DEFAULT_MODEL", "")
 else:
     _default_model = os.getenv("OPENAI_DEFAULT_MODEL", "gpt-4")
 

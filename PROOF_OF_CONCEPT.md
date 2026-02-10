@@ -20,7 +20,7 @@ Layer 2: HTTP POST (always httpx)
 
 ┌──────────┐   stdio OR SSE   ┌──────────┐    HTTP POST    ┌──────────┐
 │   MCP    │ ───────────────► │ Server A │ ──────────────► │ Server B │
-│  Client  │ ◄───────────────│          │ ◄────────────── │ (FastAPI)│
+│  Client  │ ◄─────────────── │          │ ◄────────────── │ (FastAPI)│
 └──────────┘                  └──────────┘                 └──────────┘
                                                                  │
                                                                  ▼
@@ -177,15 +177,15 @@ This proves **Server A made HTTP requests to Server B** — you never called Ser
 ## Different Machines Setup
 
 ```
-┌─────────────────────┐                    ┌─────────────────────┐
-│    Machine A         │                    │     Machine B        │
-│   (192.168.1.50)     │     HTTP POST      │   (192.168.1.100)    │
-│                      │   over network     │                      │
-│   Server A ──────────┼───────────────────►│   Server B (:8000)   │
-│                      │                    │       │               │
-│                      │                    │       ▼               │
-│                      │                    │   Mock/OpenAI/Bedrock │
-└─────────────────────┘                    └─────────────────────┘
+┌──────────────────────┐                    ┌──────────────────────┐
+│  Machine A           │                    │  Machine B           │
+│  (192.168.1.50)      │     HTTP POST      │  (192.168.1.100)     │
+│                      │    over network    │                      │
+│  Server A ───────────┼──────────────────► │  Server B (:8000)    │
+│                      │                    │       │              │
+│                      │                    │       ▼              │
+│                      │                    │  Mock/OpenAI/Bedrock │
+└──────────────────────┘                    └──────────────────────┘
 ```
 
 ### Machine B — Start Server B

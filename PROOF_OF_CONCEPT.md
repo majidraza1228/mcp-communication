@@ -20,8 +20,8 @@ Layer 2: HTTP POST (always httpx)
 
 ┌──────────┐   stdio OR SSE   ┌──────────┐    HTTP POST    ┌──────────┐
 │   MCP    │ ───────────────► │ Server A │ ──────────────► │ Server B │
-│  Client   │ ◄─────────────── │          │ ◄────────────── │ (FastAPI) │
-└──────────┘                   └──────────┘                 └──────────┘
+│  Client   │ ◄───────────────│          │ ◄────────────── │ (FastAPI)│
+└──────────┘                  └──────────┘                 └──────────┘
                                                                  │
                                                                  ▼
                                                             ┌─────────┐
@@ -43,9 +43,9 @@ YOU (Terminal 2)
  │  run test_communication.py
  ▼
 ┌────────────────────┐         HTTP POST         ┌────────────────────┐
-│   Server A         │ ────────────────────────► │   Server B          │
-│   (server_a.py)    │                           │   (http_server.py)  │
-│   MCP Messenger    │ ◄── JSON Response ─────── │   FastAPI :8000     │
+│   Server A         │ ────────────────────────► │   Server B         │
+│   (server_a.py)    │                           │   (http_server.py) │
+│   MCP Messenger    │ ◄── JSON Response ─────── │   FastAPI :8000    │
 └────────────────────┘                           └─────────┬──────────┘
                                                            │
                                                            ▼
